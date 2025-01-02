@@ -1,0 +1,242 @@
+import 'package:device_preview/device_preview.dart';
+import 'package:flutter/material.dart';
+
+void main() => runApp(
+      DevicePreview(
+        builder: (context) => const MyApp(),
+      ),
+    );
+
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.light; // Default theme mode
+
+  void _toggleTheme() {
+    setState(() {
+      _themeMode =
+          _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      themeMode: _themeMode,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        appBarTheme: const AppBarTheme(backgroundColor: Colors.blue),
+        scaffoldBackgroundColor: const Color.fromARGB(255, 248, 250, 130),
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        primarySwatch: Colors.blue,
+        appBarTheme: const AppBarTheme(backgroundColor: Colors.blueGrey),
+        scaffoldBackgroundColor: Colors.black,
+      ),
+      home: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: AppBar(
+            bottom: const TabBar(
+              tabs: [
+                Tab(
+                  icon: Icon(Icons.drive_eta),
+                  text: 'Driving',
+                ),
+                Tab(
+                  icon: Icon(Icons.account_circle),
+                  text: 'Profile',
+                ),
+              ],
+            ),
+            title: const Text('Road Rush'),
+            actions: [
+              IconButton(
+                icon: Icon(
+                  _themeMode == ThemeMode.light
+                      ? Icons.dark_mode
+                      : Icons.light_mode,
+                ),
+                onPressed: _toggleTheme,
+              ),
+            ],
+          ),
+          body: const TabBarView(
+            children: [
+              DrivingTab(),
+              ProfileTab(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class DrivingTab extends StatelessWidget {
+  const DrivingTab({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: ListView(
+        children: [
+          buildCard(
+            context,
+            icon: Icons.toys_sharp,
+            title: 'Easy Mode',
+            subtitle: 'Learn how to control the car',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const DetailsScreen(title: 'Traffic Rules'),
+                ),
+              );
+            },
+          ),
+          buildCard(
+            context,
+            icon: Icons.traffic_sharp,
+            title: 'Medium Mode',
+            subtitle: 'Understand limitation of the driving.',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const DetailsScreen(title: 'Caution Areas'),
+                ),
+              );
+            },
+          ),
+          buildCard(
+            context,
+            icon: Icons.rule,
+            title: 'Hard Mode',
+            subtitle: 'learning the Road rules',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const DetailsScreen(title: 'Car Driving Tips'),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onPressed,
+  }) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      elevation: 4,
+      child: ListTile(
+        leading: Icon(icon, color: Colors.blue, size: 36),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(subtitle),
+        trailing: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+          child: const Text('Learn More'),
+        ),
+      ),
+    );
+  }
+}
+
+class ProfileTab extends StatelessWidget {
+  const ProfileTab({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: ListView(
+        children: [
+          buildProfileCard(
+            context,
+            icon: Icons.person,
+            title: 'User Profile',
+            subtitle: 'Manage your account details.',
+          ),
+          buildProfileCard(
+            context,
+            icon: Icons.settings,
+            title: 'Settings',
+            subtitle: 'Configure your app preferences.',
+          ),
+          buildProfileCard(
+            context,
+            icon: Icons.star,
+            title: 'Achievements',
+            subtitle: 'View your game achievements.',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildProfileCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      elevation: 4,
+      child: ListTile(
+        leading: Icon(icon, color: Colors.amber, size: 36),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(subtitle),
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$title clicked!')),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class DetailsScreen extends StatelessWidget {
+  final String title;
+
+  const DetailsScreen({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Center(
+        child: Text(
+          'Details about $title',
+          style: const TextStyle(fontSize: 24),
+        ),
+      ),
+    );
+  }
+}
