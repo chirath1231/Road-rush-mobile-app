@@ -1,0 +1,60 @@
+import serial
+
+try:
+    ser = serial.Serial('COM4', 9600, timeout=1)  # Replace 'COM4' with your port
+    print("Port opened successfully!")
+    ser.close()  # Close the port after testing
+except serial.SerialException as e:
+    print(f"Error: {e}")
+from pynput.keyboard import Controller, Key
+
+# Configure the serial port
+SERIAL_PORT = "COM4"  # Replace with your ESP32's serial port
+BAUD_RATE = 115200
+
+# Initialize serial communication and keyboard controller
+ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+keyboard = Controller()
+
+print("Listening for 'g1' from the ESP32...")
+
+try:
+    while True:
+        # Read a line from the serial port
+        line = ser.readline().decode('utf-8').strip()
+        
+        # Debug: print received data
+        print(f"Received: {line}")
+        
+        # Check if "g1" is received
+        if line == "g1":
+            print("Triggering '1' key press")
+            keyboard.press('1')
+        elif line == "g2":
+            print("Triggering '2' key press")
+            keyboard.press('2')
+        elif line == "g3":
+            print("Triggering '3' key press")
+            keyboard.press('3')
+        elif line == "g4":
+            print("Triggering '4' key press")
+            keyboard.press('4')
+        elif line == "g5":
+            print("Triggering '5' key press")
+            keyboard.press('5')
+        elif line == "g6":
+            print("Triggering '6' key press")
+            keyboard.press('6')
+    
+        elif line == "brake":
+            print("Triggering 'brake' key press")
+            keyboard.press('b')
+    
+
+
+except KeyboardInterrupt:
+    print("Program terminated by user.")
+
+finally:
+    # Close the serial port when exiting
+    ser.close()
