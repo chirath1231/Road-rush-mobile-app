@@ -1,0 +1,66 @@
+// Define the button GPIO pins
+#define gear1 21
+#define gear2 22
+#define gear3 19
+#define gear4 4
+#define gear5 5
+#define gear6 23
+#define handbrake 14
+
+
+
+void setup() {
+  // Initialize serial communication for debugging
+  Serial.begin(115200);
+
+  // Configure the button pins as INPUT_PULLUP
+  pinMode(gear1, INPUT_PULLUP);
+  pinMode(gear2, INPUT_PULLUP);
+  pinMode(gear3, INPUT_PULLUP);
+  pinMode(gear4, INPUT_PULLUP);
+  pinMode(gear5, INPUT_PULLUP);
+  pinMode(gear6, INPUT_PULLUP);
+  pinMode(handbrake, INPUT_PULLUP);
+
+
+
+  Serial.println("Setup complete. Waiting for button presses...");
+}
+
+void loop() {
+  // Read the state of each gear switch
+  if (digitalRead(gear1) == LOW) {
+    Serial.println("g1");
+    delay(100); // Add a small delay to prevent overwhelming the serial monitor
+  }
+
+  if (digitalRead(gear2) == LOW) {
+    Serial.println("g2");
+    delay(100);
+  }
+
+  if (digitalRead(gear3) == LOW) {
+    Serial.println("g3");
+    delay(100);
+  }
+
+  if (digitalRead(gear4) == LOW) {
+    Serial.println("g4");
+    delay(100);
+  }
+
+  if (digitalRead(gear5) == LOW) {
+    Serial.println("g5");
+    delay(100);
+  }
+
+  if (digitalRead(gear6) == LOW) {
+    Serial.println("g6");
+    delay(100);
+  }
+
+    if (digitalRead(handbrake) == LOW) {
+    Serial.println("brake");
+    delay(100);
+  }
+}
