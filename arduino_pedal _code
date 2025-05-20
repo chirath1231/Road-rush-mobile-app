@@ -1,0 +1,21 @@
+// dual_pot.ino
+const int BRAKE_POT = A0;
+const int ACCEL_POT = A1;
+
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  int brakeRaw = analogRead(BRAKE_POT);  // 0–1023
+  int accelRaw = analogRead(ACCEL_POT);  // 0–1023
+
+  float brake = 1.0 - (brakeRaw / 1023.0);  // invert
+  float accel = accelRaw / 1023.0;          // no invert
+
+  Serial.print(brake, 3);
+  Serial.print(",");
+  Serial.println(accel, 3);
+
+  delay(20);  // ~50Hz
+}
