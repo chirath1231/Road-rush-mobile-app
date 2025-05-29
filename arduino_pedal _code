@@ -1,4 +1,9 @@
 // encoder_pots.ino
+// Define control pins
+const int RPWM = 5; // PWM pin
+const int LPWM = 6; // PWM pin
+const int R_EN = 7;
+const int L_EN = 8;
 
 const int BRAKE_POT = A0;
 const int ACCEL_POT = A1;
@@ -13,6 +18,17 @@ void setup() {
   pinMode(ENC_A, INPUT_PULLUP);
   pinMode(ENC_B, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(ENC_A), onEncoderChange, CHANGE);
+  // Set control pins as outputs
+  pinMode(RPWM, OUTPUT);
+  pinMode(LPWM, OUTPUT);
+  pinMode(R_EN, OUTPUT);
+  pinMode(L_EN, OUTPUT);
+
+  // Enable both channels
+  digitalWrite(R_EN, HIGH);
+  digitalWrite(L_EN, HIGH);
+  
+  
   Serial.begin(9600);
 }
 
@@ -23,23 +39,37 @@ void loop() {
 
   // 2) Snapshot & clamp encoder ticks
   noInterrupts();
-    long ticks = encoderTicks;
+  long ticks = encoderTicks;
   interrupts();
   ticks = constrain(ticks, -MAX_TICKS, MAX_TICKS);
 
   // 3) Normalize to -1…+1
   float steer = ticks / float(MAX_TICKS);
 
-  // 4) Send CSV: steer,brake,accel
+  // === Control motor for resistive torque ===
+  const int torque = 40; // resistance torque value (0-255)
+  if (steer > 0.05) { // add a deadzone to avoid jitter
+    analogWrite(RPWM, torque);
+    analogWrite(LPWM, 0);
+  } else if (steer < -0.05) {
+    analogWrite(RPWM, 0);
+    analogWrite(LPWM, torque);
+  } else {
+    analogWrite(RPWM, 0);
+    analogWrite(LPWM, 0);
+  }
+
+  // 4) Send CSV: steer, brake, accel
   Serial.print(steer, 3);
   Serial.print(',');
   Serial.print(brake, 3);
   Serial.print(',');
   Serial.println(accel, 3);
 
-  // 5) Wait ~20 ms → ~50 Hz update rate
+  // 5) Delay
   delay(20);
 }
+
 
 void onEncoderChange() {
   // Quadrature decoding
@@ -47,4 +77,3 @@ void onEncoderChange() {
   bool b = digitalRead(ENC_B);
   encoderTicks += (a == b) ? +1 : -1;
 }
-
