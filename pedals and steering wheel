@@ -1,0 +1,49 @@
+// encoder_pots.ino
+
+const int BRAKE_POT = A0;
+const int ACCEL_POT = A1;
+const int ENC_A     = 2;  // interrupt pin
+const int ENC_B     = 3;
+
+volatile long encoderTicks = 0;
+// ±1200 ticks = ±2 full revolutions at 600 PPR
+const long MAX_TICKS = 1200;
+
+void setup() {
+  pinMode(ENC_A, INPUT_PULLUP);
+  pinMode(ENC_B, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(ENC_A), onEncoderChange, CHANGE);
+  Serial.begin(9600);
+}
+
+void loop() {
+  // 1) Read brake & accel pots
+  float brake = 1.0 - (analogRead(BRAKE_POT) / 1023.0);
+  float accel =     analogRead(ACCEL_POT) / 1023.0;
+
+  // 2) Snapshot & clamp encoder ticks
+  noInterrupts();
+    long ticks = encoderTicks;
+  interrupts();
+  ticks = constrain(ticks, -MAX_TICKS, MAX_TICKS);
+
+  // 3) Normalize to -1…+1
+  float steer = ticks / float(MAX_TICKS);
+
+  // 4) Send CSV: steer,brake,accel
+  Serial.print(steer, 3);
+  Serial.print(',');
+  Serial.print(brake, 3);
+  Serial.print(',');
+  Serial.println(accel, 3);
+
+  // 5) Wait ~20 ms → ~50 Hz update rate
+  delay(20);
+}
+
+void onEncoderChange() {
+  // Quadrature decoding
+  bool a = digitalRead(ENC_A);
+  bool b = digitalRead(ENC_B);
+  encoderTicks += (a == b) ? +1 : -1;
+}
