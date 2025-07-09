@@ -1,48 +1,80 @@
-// encoder_pots.ino
-
 const int BRAKE_POT = A0;
 const int ACCEL_POT = A1;
-const int ENC_A     = 2;  // interrupt pin
+const int ENC_A     = 2;
 const int ENC_B     = 3;
 
+const int RPWM = 5;  // PWM pins to motor driver
+const int LPWM = 6;
+const int R_EN = 7;
+const int L_EN = 8;
+
 volatile long encoderTicks = 0;
-// ±1200 ticks = ±2 full revolutions at 600 PPR
 const long MAX_TICKS = 1200;
+
+unsigned long lastUpdate = 0;
+const unsigned long UPDATE_INTERVAL = 20;
 
 void setup() {
   pinMode(ENC_A, INPUT_PULLUP);
   pinMode(ENC_B, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(ENC_A), onEncoderChange, CHANGE);
   Serial.begin(9600);
+
+  pinMode(RPWM, OUTPUT);
+  pinMode(LPWM, OUTPUT);
+  pinMode(R_EN, OUTPUT);
+  pinMode(L_EN, OUTPUT);
+
+  digitalWrite(R_EN, HIGH);
+  digitalWrite(L_EN, HIGH);
 }
 
 void loop() {
-  // 1) Read brake & accel pots
-  float brake = 1.0 - (analogRead(BRAKE_POT) / 1023.0);
-  float accel =     analogRead(ACCEL_POT) / 1023.0;
+  if (millis() - lastUpdate >= UPDATE_INTERVAL) {
+    lastUpdate = millis();
 
-  // 2) Snapshot & clamp encoder ticks
-  noInterrupts();
+    // Read potentiometers
+    float brake = 1.0 - analogRead(BRAKE_POT) / 1023.0;
+    float accel = analogRead(ACCEL_POT) / 1023.0;
+
+    // Read encoder position safely
+    noInterrupts();
     long ticks = encoderTicks;
-  interrupts();
-  ticks = constrain(ticks, -MAX_TICKS, MAX_TICKS);
+    interrupts();
 
-  // 3) Normalize to -1…+1
-  float steer = ticks / float(MAX_TICKS);
+    ticks = constrain(ticks, -MAX_TICKS, MAX_TICKS);
+    float steer = ticks / float(MAX_TICKS); // Normalized -1.0 to +1.0
 
-  // 4) Send CSV: steer,brake,accel
-  Serial.print(steer, 3);
-  Serial.print(',');
-  Serial.print(brake, 3);
-  Serial.print(',');
-  Serial.println(accel, 3);
+    // // Resistance torque logic (push back toward center)
+    // float torqueGain = 40.0;  // Adjust this for strength
+    // int torque = int(abs(steer) * torqueGain);
+    // torque = constrain(torque, 0, 255);
+    int torque=200.0;
 
-  // 5) Wait ~20 ms → ~50 Hz update rate
-  delay(20);
+    if (steer < -0.05) {
+      // Wheel turned left — push right
+      analogWrite(RPWM, torque);
+      analogWrite(LPWM, 0);
+    } else if (steer > 0.05) {
+      // Wheel turned right — push left
+      analogWrite(RPWM, 0);
+      analogWrite(LPWM, torque);
+    } else {
+      // Near center — stop motor
+      analogWrite(RPWM, 0);
+      analogWrite(LPWM, 0);
+    }
+
+    // Send values to Unity
+    Serial.print(steer, 3);
+    Serial.print(',');
+    Serial.print(brake, 3);
+    Serial.print(',');
+    Serial.println(accel, 3);
+  }
 }
 
 void onEncoderChange() {
-  // Quadrature decoding
   bool a = digitalRead(ENC_A);
   bool b = digitalRead(ENC_B);
   encoderTicks += (a == b) ? +1 : -1;
